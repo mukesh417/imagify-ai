@@ -1,41 +1,80 @@
 import axios from "axios";
-import userModel from "../models/userModel.js"
-import FormData from "form-data";
+import userModel from "../models/userModel.js";
 
-export  const generateImage = async(req,res)=>{
-    try {
-        const {userId, prompt} = req.body
-        const user  = await userModel.findById(userId);
-        
-        if(!user || !prompt){
-            return res.json({success:false, message:'Missing Details'})
-        }
-        if(user.creditBalance === 0 || userModel.creditBalance < 0){
-            return res.json({success:false, message: 'No Credit Balance', creditBalance: user.creditBalance})
-        }
-        
-        const formData = new FormData()
-        formData.append('prompt', prompt)
+const generateImage = async (req, res) => {
+  try {
+    // ✅ userId auth middleware se aa raha hai
+    const userId = req.userId;
+    const { prompt } = req.body;
 
-       const {data} =  await axios.post('https://clipdrop-api.co/text-to-image/v1',formData,{
-
-             headers: {
-               'x-api-key': process.env.ClIPDROP_API,
-              },
-            responseType:'arraybuffer'
-
-        })
-
-        const base64Image = Buffer.from(data,'binary').toString('base64')
-
-        const resultImage = `data:image/png;base64,${base64Image}`
-
-        await userModel.findByIdAndUpdate(user._id,{creditBalance: user.creditBalance-1})
-
-        res.json({success:true, message: "Image Generated",creditBalance: user.creditBalance-1, resultImage})
-
-    } catch (error) {
-        console.log(error.message)
-        res.json({success:false, message:error.message})
+    if (!prompt) {
+      return res.status(400).json({
+        success: false,
+        message: "Prompt is required",
+      });
     }
-}
+
+    // ✅ user find karo
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // ✅ credit check
+    if (user.creditBalance <= 0) {
+      return res.status(401).json({
+        success: false,
+        message: "No credits left",
+        creditBalance: 0,
+      });
+    }
+
+    // =========================
+    // CALL CLIPDROP API
+    // =========================
+    const response = await axios.post(
+      "https://clipdrop-api.co/text-to-image/v1",
+      { prompt },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.CLIPDROP_API,
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    // image buffer to base64
+    const base64Image = Buffer.from(response.data).toString("base64");
+    const imageUrl = `data:image/png;base64,${base64Image}`;
+
+    // =========================
+    // UPDATE USER CREDITS
+    // =========================
+    user.creditBalance = user.creditBalance - 1;
+    await user.save();
+
+    // =========================
+    // RESPONSE
+    // =========================
+    res.json({
+      success: true,
+      resultImage: imageUrl,
+      credits: user.creditBalance,
+    });
+
+  } catch (error) {
+    console.error("❌ Generate Image Error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Image generation failed",
+    });
+  }
+};
+
+export { generateImage };
