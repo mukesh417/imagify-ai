@@ -1,80 +1,57 @@
 import axios from "axios";
 import userModel from "../models/userModel.js";
+import FormData from "form-data";
 
-const generateImage = async (req, res) => {
+export const generateImage = async (req, res) => {
   try {
-    // ✅ userId auth middleware se aa raha hai
-    const userId = req.userId;
+    const userId = req.userId;        // ✅ FROM AUTH
     const { prompt } = req.body;
 
     if (!prompt) {
-      return res.status(400).json({
-        success: false,
-        message: "Prompt is required",
-      });
+      return res.json({ success: false, message: "Prompt missing" });
     }
 
-    // ✅ user find karo
     const user = await userModel.findById(userId);
-
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "User not found",
-      });
+      return res.status(401).json({ success: false, message: "User not found" });
     }
 
-    // ✅ credit check
     if (user.creditBalance <= 0) {
-      return res.status(401).json({
+      return res.json({
         success: false,
         message: "No credits left",
-        creditBalance: 0,
+        creditBalance: 0
       });
     }
 
-    // =========================
-    // CALL CLIPDROP API
-    // =========================
+    const formData = new FormData();
+    formData.append("prompt", prompt);
+
     const response = await axios.post(
       "https://clipdrop-api.co/text-to-image/v1",
-      { prompt },
+      formData,
       {
         headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.CLIPDROP_API,
+          "x-api-key": process.env.CLIPDROP_API
         },
-        responseType: "arraybuffer",
+        responseType: "arraybuffer"
       }
     );
 
-    // image buffer to base64
     const base64Image = Buffer.from(response.data).toString("base64");
-    const imageUrl = `data:image/png;base64,${base64Image}`;
+    const resultImage = `data:image/png;base64,${base64Image}`;
 
-    // =========================
-    // UPDATE USER CREDITS
-    // =========================
-    user.creditBalance = user.creditBalance - 1;
+    user.creditBalance -= 1;
     await user.save();
 
-    // =========================
-    // RESPONSE
-    // =========================
     res.json({
       success: true,
-      resultImage: imageUrl,
-      credits: user.creditBalance,
+      resultImage,
+      creditBalance: user.creditBalance
     });
 
   } catch (error) {
-    console.error("❌ Generate Image Error:", error.message);
-
-    res.status(500).json({
-      success: false,
-      message: "Image generation failed",
-    });
+    console.log(error.message);
+    res.status(500).json({ success: false, message: "Image generation failed" });
   }
 };
-
-export { generateImage };

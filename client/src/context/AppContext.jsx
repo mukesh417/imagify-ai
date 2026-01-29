@@ -23,7 +23,7 @@ const AppContextProvider = (props) => {
         `${backendUrl}/api/user/credits`,
         {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`   // ✅ FIX
           }
         }
       );
@@ -34,7 +34,7 @@ const AppContextProvider = (props) => {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Unable to load user data");
+      toast.error("Unable to load credits");
     }
   };
 
@@ -43,14 +43,12 @@ const AppContextProvider = (props) => {
   // =========================
   const generateImage = async (prompt) => {
     try {
-      console.log("🟡 FRONTEND TOKEN:", token);
-
       const { data } = await axios.post(
         `${backendUrl}/api/image/generate-image`,
         { prompt },
         {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`   // ✅ FIX
           }
         }
       );
@@ -63,16 +61,7 @@ const AppContextProvider = (props) => {
       }
     } catch (error) {
       console.error(error);
-
-      if (error.response) {
-        toast.error(error.response.data.message || "Unauthorized");
-
-        if (error.response.status === 401) {
-          logout();
-        }
-      } else {
-        toast.error("Server not reachable");
-      }
+      toast.error("Generate image failed");
     }
   };
 
