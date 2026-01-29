@@ -28,10 +28,49 @@
 
 
 // =======================================================
+// import jwt from "jsonwebtoken";
+
+// const userAuth = async (req, res, next) => {
+//   // ✅ token safely read from headers
+//   const token =
+//     req.headers.token ||
+//     req.headers.authorization?.split(" ")[1];
+
+//   console.log("🧠 Received token:", token);
+
+//   if (!token) {
+//     return res
+//       .status(401)
+//       .json({ success: false, message: "Not Authorized. Login Again" });
+//   }
+
+//   try {
+//     const tokenDecode = jwt.verify(token.trim(), process.env.JWT_SECRET);
+
+//     if (!req.body) req.body = {};
+//     req.body.userId = tokenDecode.id;
+
+//     next();
+//   } catch (error) {
+//     console.log("❌ JWT error:", error.message);
+//     return res
+//       .status(401)
+//       .json({ success: false, message: "Invalid or Expired Token" });
+//   }
+// };
+
+// export default userAuth;
+// ==================================================================================
 import jwt from "jsonwebtoken";
 
 const userAuth = async (req, res, next) => {
-  // ✅ token safely read from headers
+
+  // ✅ VERY IMPORTANT: allow CORS preflight
+  if (req.method === "OPTIONS") {
+    return next();
+  }
+
+  // ✅ Read token safely
   const token =
     req.headers.token ||
     req.headers.authorization?.split(" ")[1];
@@ -39,23 +78,26 @@ const userAuth = async (req, res, next) => {
   console.log("🧠 Received token:", token);
 
   if (!token) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Not Authorized. Login Again" });
+    return res.status(401).json({
+      success: false,
+      message: "Not Authorized. Login Again"
+    });
   }
 
   try {
-    const tokenDecode = jwt.verify(token.trim(), process.env.JWT_SECRET);
+    const decoded = jwt.verify(token.trim(), process.env.JWT_SECRET);
 
+    // ensure req.body exists
     if (!req.body) req.body = {};
-    req.body.userId = tokenDecode.id;
+    req.body.userId = decoded.id;
 
     next();
   } catch (error) {
     console.log("❌ JWT error:", error.message);
-    return res
-      .status(401)
-      .json({ success: false, message: "Invalid or Expired Token" });
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or Expired Token"
+    });
   }
 };
 
