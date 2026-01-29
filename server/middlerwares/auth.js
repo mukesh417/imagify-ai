@@ -61,42 +61,80 @@
 
 // export default userAuth;
 // ==================================================================================
+// import jwt from "jsonwebtoken";
+
+// const userAuth = async (req, res, next) => {
+
+//   // ✅ VERY IMPORTANT: allow CORS preflight
+//   if (req.method === "OPTIONS") {
+//     return next();
+//   }
+
+//   // ✅ Read token safely
+//   const token =
+//     req.headers.token ||
+//     req.headers.authorization?.split(" ")[1];
+
+//   console.log("🧠 Received token:", token);
+
+//   if (!token) {
+//     return res.status(401).json({
+//       success: false,
+//       message: "Not Authorized. Login Again"
+//     });
+//   }
+
+//   try {
+//     const decoded = jwt.verify(token.trim(), process.env.JWT_SECRET);
+
+//     // ensure req.body exists
+//     if (!req.body) req.body = {};
+//     req.body.userId = decoded.id;
+
+//     next();
+//   } catch (error) {
+//     console.log("❌ JWT error:", error.message);
+//     return res.status(401).json({
+//       success: false,
+//       message: "Invalid or Expired Token"
+//     });
+//   }
+// };
+
+// export default userAuth;
+// =========================================================================
 import jwt from "jsonwebtoken";
 
-const userAuth = async (req, res, next) => {
+const userAuth = (req, res, next) => {
 
-  // ✅ VERY IMPORTANT: allow CORS preflight
+  // ✅ allow CORS preflight
   if (req.method === "OPTIONS") {
-    return next();
+    return res.sendStatus(200);
   }
 
-  // ✅ Read token safely
-  const token =
-    req.headers.token ||
-    req.headers.authorization?.split(" ")[1];
+  // ✅ ONLY industry-standard header
+  const authHeader = req.headers.authorization;
 
-  console.log("🧠 Received token:", token);
+  console.log("🧠 AUTH HEADER:", authHeader);
 
-  if (!token) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({
       success: false,
-      message: "Not Authorized. Login Again"
+      message: "Authorization header missing"
     });
   }
 
+  const token = authHeader.split(" ")[1];
+
   try {
-    const decoded = jwt.verify(token.trim(), process.env.JWT_SECRET);
-
-    // ensure req.body exists
-    if (!req.body) req.body = {};
-    req.body.userId = decoded.id;
-
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.id;
     next();
-  } catch (error) {
-    console.log("❌ JWT error:", error.message);
+  } catch (err) {
+    console.log("❌ JWT VERIFY ERROR:", err.message);
     return res.status(401).json({
       success: false,
-      message: "Invalid or Expired Token"
+      message: "Invalid token"
     });
   }
 };
