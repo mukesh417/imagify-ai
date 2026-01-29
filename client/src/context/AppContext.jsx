@@ -169,6 +169,8 @@ const loadCreditsData = async () => {
 //       }
 //     }
 //   };
+console.log("🟡 FRONTEND TOKEN:", token);
+
 const generateImage = async (prompt) => {
   try {
     const { data } = await axios.post(
