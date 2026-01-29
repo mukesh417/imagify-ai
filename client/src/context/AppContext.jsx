@@ -96,57 +96,113 @@ const AppContextProvider = (props) => {
   // =========================
   // LOAD USER CREDITS
   // =========================
-  const loadCreditsData = async () => {
-    try {
-      const { data } = await axios.get(
-        `${backendUrl}/api/user/credits`,
-        { headers: { token } }
-      );
+//   const loadCreditsData = async () => {
+//     try {
+//       const { data } = await axios.get(
+//         `${backendUrl}/api/user/credits`,
+//         { headers: { token } }
+//       );
 
-      if (data.success) {
-        setCredit(data.credits);
-        setUser(data.user);
+//       if (data.success) {
+//         setCredit(data.credits);
+//         setUser(data.user);
+//       }
+//     } catch (error) {
+//       console.error(error);
+//       toast.error("Unable to load user data");
+//     }
+//   };
+
+const loadCreditsData = async () => {
+  try {
+    const { data } = await axios.get(
+      `${backendUrl}/api/user/credits`,
+      {
+        headers: {
+          token: token   // ✅ backend expects this
+        }
       }
-    } catch (error) {
-      console.error(error);
-      toast.error("Unable to load user data");
+    );
+
+    if (data.success) {
+      setCredit(data.credits);
+      setUser(data.user);
     }
-  };
+  } catch (error) {
+    console.error(error);
+    toast.error("Unable to load user data");
+  }
+};
+
 
   // =========================
   // GENERATE IMAGE
   // =========================
-  const generateImage = async (prompt) => {
-    try {
-      const { data } = await axios.post(
-        `${backendUrl}/api/image/generate-image`,
-        { prompt },
-        { headers: { token } }
-      );
+//   const generateImage = async (prompt) => {
+//     try {
+//       const { data } = await axios.post(
+//         `${backendUrl}/api/image/generate-image`,
+//         { prompt },
+//         { headers: { token } }
+//       );
 
-      if (data.success) {
-        await loadCreditsData();
-        return data.resultImage;
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      console.error(error);
+//       if (data.success) {
+//         await loadCreditsData();
+//         return data.resultImage;
+//       } else {
+//         toast.error(data.message);
+//       }
+//     } catch (error) {
+//       console.error(error);
 
-      // ✅ Server responded with error
-      if (error.response) {
-        toast.error(error.response.data.message || "Server error");
+//       // ✅ Server responded with error
+//       if (error.response) {
+//         toast.error(error.response.data.message || "Server error");
 
-        if (error.response.data.creditBalance === 0) {
-          navigate("/buy");
+//         if (error.response.data.creditBalance === 0) {
+//           navigate("/buy");
+//         }
+//       } 
+//       // ❌ Server unreachable / Network error
+//       else {
+//         toast.error("Server not reachable. Please try again later.");
+//       }
+//     }
+//   };
+const generateImage = async (prompt) => {
+  try {
+    const { data } = await axios.post(
+      `${backendUrl}/api/image/generate-image`,
+      { prompt },
+      {
+        headers: {
+          token: token   // ✅ VERY IMPORTANT
         }
-      } 
-      // ❌ Server unreachable / Network error
-      else {
-        toast.error("Server not reachable. Please try again later.");
       }
+    );
+
+    if (data.success) {
+      await loadCreditsData();
+      return data.resultImage;
+    } else {
+      toast.error(data.message);
     }
-  };
+
+  } catch (error) {
+    console.error(error);
+
+    if (error.response) {
+      toast.error(error.response.data.message || "Unauthorized");
+
+      if (error.response.data.message?.includes("Not Authorized")) {
+        logout();
+      }
+    } else {
+      toast.error("Server not reachable");
+    }
+  }
+};
+
 
   // =========================
   // LOGOUT
