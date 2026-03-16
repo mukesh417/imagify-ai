@@ -98,7 +98,7 @@ const Login = () => {
 
         <p className='text-sm text-purple-600 mb-4 cursor-pointer hover:underline'>Forgot Password?</p>
 
-        <button className='w-full bg-purple-700 hover:bg-purple-800 text-white py-2 rounded-full font-medium transition'>
+        <button className='w-full bg-purple-700 hover:bg-purple-800 text-white py-2 rounded-full font-medium transition cursor-pointer'>
           {state === 'Login' ? 'Login' : 'Sign Up'}
         </button>
 

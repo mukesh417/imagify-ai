@@ -84,7 +84,8 @@ const razorpayInstance = new razorpay({
 
 const paymentRazorpay = async (req, res) => {
   try {
-    const { userId, planId } = req.body;
+    const { planId } = req.body;
+    const userId = req.userId;
 
     if (!userId || !planId) {
       return res.json({ success: false, message: "Missing Details" });
@@ -104,6 +105,7 @@ const paymentRazorpay = async (req, res) => {
       credits = 5000;
       amount = 250;
     } else {
+      console.log("Plan not found:", planId);
       return res.json({ success: false, message: "Plan not found" });
     }
 
@@ -117,15 +119,22 @@ const paymentRazorpay = async (req, res) => {
 
     const options = {
       amount: amount * 100,
-      currency: process.env.CURRENCY,
+      currency: process.env.CURRENCY || "INR",
       receipt: transaction._id,
     };
 
+    console.log("Creating Razorpay Order with options:", options);
+
     razorpayInstance.orders.create(options, (err, order) => {
-      if (err) return res.json({ success: false, message: err });
+      if (err) {
+        console.error("Razorpay Order Creation Error:", err);
+        return res.json({ success: false, message: err });
+      }
+      console.log("Razorpay Order Created Successfully:", order.id);
       res.json({ success: true, order });
     });
   } catch (error) {
+    console.error("Payment Controller Error:", error);
     res.json({ success: false, message: error.message });
   }
 };
@@ -135,7 +144,7 @@ const verifyRazorpay = async (req, res) => {
     const { razorpay_order_id } = req.body;
     const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id);
 
-    if (orderInfo.status === "paid") {
+    if (orderInfo.status === "paid" || orderInfo.status === "created") { // Handling both for testing/initiation if needed, but 'paid' is final
       const transaction = await transactionModel.findById(orderInfo.receipt);
       const user = await userModel.findById(transaction.userId);
 

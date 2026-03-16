@@ -28,7 +28,7 @@ const GenerateBtn = () => {
 
       <button
         onClick={onClickHandler}
-        className="inline-flex items-center gap-3 px-14 py-3 rounded-full bg-purple-700 text-white hover:bg-purple-800 hover:scale-105 transition-all duration-500"
+        className="inline-flex items-center gap-3 px-14 py-3 rounded-full bg-purple-700 text-white hover:bg-purple-800 hover:scale-105 transition-all duration-500 cursor-pointer"
       >
         Generate Your Image
         <img src={assets.star_group} alt="" className="h-6" />

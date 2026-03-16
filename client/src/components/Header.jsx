@@ -57,7 +57,7 @@ const Header = () => {
       {/* Generate Button */}
       <motion.button
         onClick={onClickHandler}
-        className="mt-8 px-12 py-3 flex items-center gap-3 rounded-full bg-linear-to-r from-purple-500 to-pink-500 text-white font-medium shadow-lg hover:scale-105 transition-transform duration-300"
+        className="mt-8 px-12 py-3 flex items-center gap-3 rounded-full bg-linear-to-r from-purple-500 to-pink-500 text-white font-medium shadow-lg hover:scale-105 transition-transform duration-300 cursor-pointer"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         initial={{ opacity: 0 }}
